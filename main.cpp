@@ -19,8 +19,6 @@ bool lessString(const string &a, const string &b) {
         if (a[i] > b[i]) return false;
     }
 
-    charComparisons++;
-
     return a.size() < b.size();
 }
 
@@ -80,6 +78,7 @@ class SortingAlgorithms {
         while (j <= r) t[k++] = a[j++];
         for (int x = 0; x < k; ++x) a[l + x] = move(t[x]);
     }
+
     static void mergeRec(vector<string> &a, vector<string> &t, int l, int r) {
         if (l >= r) return;
         int m = l + (r - l) / 2;
@@ -87,27 +86,50 @@ class SortingAlgorithms {
         mergeRec(a, t, m + 1, r);
         mergeRanges(a, t, l, m, r);
     }
+
     static int charAtQuick(const string &s, int d) {
         return d < (int)s.size() ? (int)(unsigned char)s[d] : -1;
     }
+
     static void quickRec(vector<string> &a, int lo, int hi, int d) {
         if (hi <= lo) return;
+
         int lt = lo, gt = hi;
         int v = charAtQuick(a[lo], d);
         int i = lo + 1;
+
         while (i <= gt) {
             int t = charAtQuick(a[i], d);
-            if (t < v) { swap(a[lt], a[i]); lt++; i++; }
-            else if (t > v) { swap(a[i], a[gt]); gt--; }
-            else i++;
+
+            charComparisons++;
+            if (t < v) {
+                swap(a[lt], a[i]);
+                lt++;
+                i++;
+            } else {
+                charComparisons++;
+                if (t > v) {
+                    swap(a[i], a[gt]);
+                    gt--;
+                } else {
+                    i++;
+                }
+            }
         }
+
         quickRec(a, lo, lt - 1, d);
-        if (v >= 0) quickRec(a, lt, gt, d + 1);
+
+        if (v >= 0) {
+            quickRec(a, lt, gt, d + 1);
+        }
+
         quickRec(a, gt + 1, hi, d);
     }
+
     static int charAtRadix(const string &s, int d) {
         return d < (int)s.size() ? (int)(unsigned char)s[d] + 1 : 0;
     }
+
     static void msdRec(vector<string> &a, vector<string> &aux, int lo, int hi, int d) {
         if (hi <= lo) return;
         const int R = 256;
@@ -129,6 +151,7 @@ class SortingAlgorithms {
             if (sub_lo < sub_hi) msdRec(a, aux, sub_lo, sub_hi, d + 1);
         }
     }
+
     static void msdRecQuick(vector<string> &a, vector<string> &aux, int lo, int hi, int d, int threshold) {
         if (hi - lo + 1 < threshold) {
             quickRec(a, lo, hi, d);
@@ -153,20 +176,24 @@ class SortingAlgorithms {
             if (sub_lo < sub_hi) msdRecQuick(a, aux, sub_lo, sub_hi, d + 1, threshold);
         }
     }
+
 public:
     static void mergeSort(vector<string> &a) {
         if (a.empty()) return;
         vector<string> t(a.size());
         mergeRec(a, t, 0, (int)a.size() - 1);
     }
+
     static void quickSort(vector<string> &a) {
         if (!a.empty()) quickRec(a, 0, (int)a.size() - 1, 0);
     }
+
     static void msdRadixSort(vector<string> &a) {
         if (a.empty()) return;
         vector<string> aux(a.size());
         msdRec(a, aux, 0, (int)a.size() - 1, 0);
     }
+    
     static void msdRadixQuickSort(vector<string> &a) {
         if (a.empty()) return;
         vector<string> aux(a.size());
