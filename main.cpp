@@ -62,6 +62,13 @@ public:
         }
         return v;
     }
+    static void saveToFile(const vector<string> &arr, const string &filename) {
+        ofstream out(filename);
+
+        for (const auto &s : arr) {
+            out << s << '\n';
+        }
+    }
 };
 
 const string StringGenerator::ALPHABET = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#%:;^&*()-";
@@ -193,7 +200,7 @@ public:
         vector<string> aux(a.size());
         msdRec(a, aux, 0, (int)a.size() - 1, 0);
     }
-    
+
     static void msdRadixQuickSort(vector<string> &a) {
         if (a.empty()) return;
         vector<string> aux(a.size());
@@ -250,6 +257,9 @@ int main() {
     auto baseRandom = StringGenerator::generateBaseRandom(maxSize);
     auto baseReversedFull = StringGenerator::makeReversed(baseRandom);
     auto baseNearlyFull = StringGenerator::makeNearlySorted(baseRandom);
+    StringGenerator::saveToFile(baseRandom, "random.txt");
+    StringGenerator::saveToFile(baseReversedFull, "reversed.txt");
+    StringGenerator::saveToFile(baseNearlyFull, "nearly.txt");
     for (size_t sz : sizes) {
         auto randSub = StringGenerator::subArray(baseRandom, sz);
         auto revSub = StringGenerator::subArray(baseReversedFull, sz);
