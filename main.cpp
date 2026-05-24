@@ -6,7 +6,10 @@
 #include <chrono>
 #include <fstream>
 #include <functional>
+#include <cstdlib>
+
 using namespace std;
+
 long long charComparisons = 0;
 
 bool lessString(const string &a, const string &b) {
@@ -213,24 +216,33 @@ struct Metrics {
     long long comparisons;
 };
 
-static Metrics measureTime(const vector<string> &arr, function<void(vector<string>&)> sortFunc, int runs = 3) {
-    double totalTime = 0.0;
-    long long totalCmp = 0;
-    for (int i = 0; i < runs; ++i) {
-        vector<string> copy = arr;
-        charComparisons = 0;
-        auto start = chrono::high_resolution_clock::now();
-        sortFunc(copy);
-        auto end = chrono::high_resolution_clock::now();
-        chrono::duration<double> elapsed = end - start;
-        totalTime += elapsed.count();
-        totalCmp += charComparisons;
+class StringSortTester {
+public:
+    static Metrics measureTime(const vector<string> &arr, function<void(vector<string>&)> sortFunc, int runs = 3) {
+        double totalTime = 0.0;
+        long long totalCmp = 0;
+
+        for (int i = 0; i < runs; ++i) {
+            vector<string> copy = arr;
+
+            charComparisons = 0;
+
+            auto start = chrono::high_resolution_clock::now();
+            sortFunc(copy);
+            auto end = chrono::high_resolution_clock::now();
+
+            chrono::duration<double> elapsed = end - start;
+
+            totalTime += elapsed.count();
+            totalCmp += charComparisons;
+        }
+
+        return {
+            totalTime / runs,
+            totalCmp / runs
+        };
     }
-    return {
-        totalTime / runs,
-        totalCmp / runs
-    };
-}
+};
 
 int main() {
     vector<size_t> sizes;
@@ -254,23 +266,34 @@ int main() {
     }
     csv << "\n";
     size_t maxSize = 3000;
+
     auto baseRandom = StringGenerator::generateBaseRandom(maxSize);
     auto baseReversedFull = StringGenerator::makeReversed(baseRandom);
     auto baseNearlyFull = StringGenerator::makeNearlySorted(baseRandom);
-    StringGenerator::saveToFile(baseRandom, "random.txt");
-    StringGenerator::saveToFile(baseReversedFull, "reversed.txt");
-    StringGenerator::saveToFile(baseNearlyFull, "nearly.txt");
+
+    system("mkdir -p generated_data");
+
     for (size_t sz : sizes) {
         auto randSub = StringGenerator::subArray(baseRandom, sz);
         auto revSub = StringGenerator::subArray(baseReversedFull, sz);
         auto nearSub = StringGenerator::subArray(baseNearlyFull, sz);
+
+        StringGenerator::saveToFile(randSub, "generated_data/random_" + to_string(sz) + ".txt");
+        StringGenerator::saveToFile(revSub, "generated_data/reversed_" + to_string(sz) + ".txt");
+        StringGenerator::saveToFile(nearSub, "generated_data/nearly_" + to_string(sz) + ".txt");
+
         csv << sz;
+
         for (auto &alg : algorithms) {
-            Metrics tr = measureTime(randSub, alg.second, 3);
-            Metrics trev = measureTime(revSub, alg.second, 3);
-            Metrics tnearly = measureTime(nearSub, alg.second, 3);
-            csv << "," << tr.time << "," << tr.comparisons << "," << trev.time << "," << trev.comparisons << "," << tnearly.time << "," << tnearly.comparisons;
+            Metrics tr = StringSortTester::measureTime(randSub, alg.second, 3);
+            Metrics trev = StringSortTester::measureTime(revSub, alg.second, 3);
+            Metrics tnearly = StringSortTester::measureTime(nearSub, alg.second, 3);
+
+            csv << "," << tr.time << "," << tr.comparisons
+                << "," << trev.time << "," << trev.comparisons
+                << "," << tnearly.time << "," << tnearly.comparisons;
         }
+
         csv << "\n";
     }
     return 0;
